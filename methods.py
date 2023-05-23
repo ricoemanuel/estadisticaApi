@@ -23,22 +23,24 @@ def ListCompanies():
     else:
         return (f'Error en la solicitud: {response.status_code}')
 
-def get_historical_data(symbol: str):
-    data = yf.download(symbol, start='2016-01-01')
+def get_historical_data(symbol: str, fecha:str):
+    data = yf.download(symbol, start=fecha)
     df = pd.DataFrame(data)
+    df = df.iloc[::-1]  # Invertir el dataframe
     json_data = df.to_json(orient='records')
     return str(json_data)
 
-def analiys(symbol:str):
-    data=json.loads(get_historical_data(symbol))
+
+def analiys(symbol:str,fecha:str):
+    data=json.loads(get_historical_data(symbol,fecha))
     if(len(data)>0):
         return (EstadicticaDescriptiva(data,symbol))
     else:
         datos = {"symbol":symbol,"accepted":False}
         return json.dumps(datos)
 
-def rentabilidad_inversion(money,SYMBOL):
-    data = json.loads(get_historical_data(SYMBOL))
+def rentabilidad_inversion(money,SYMBOL,fecha):
+    data = json.loads(get_historical_data(SYMBOL,fecha))
     money = float(money)
     close_prices = []
     for i in range(0,len(data)):
@@ -89,11 +91,11 @@ def EstadicticaDescriptiva(data,symbol):
     datos = {"symbol":symbol,"media": mean, "mediana": median, "moda": mode, "desviacion": stdev, "varianza": variance,"accepted":True}
     return json.dumps(datos)
 
-def estadisticasGrupales(group):
+def estadisticasGrupales(group,dates):
     statics=[]
     ignored=[]
     for i in range(0,len(group)):
-        company=analiys(group[i])
+        company=analiys(group[i],dates[i])
         statics.append(json.loads(company))
     for empresa in statics:
         if empresa["accepted"]:
